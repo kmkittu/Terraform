@@ -236,5 +236,8 @@ Execute the Terraform plan to verify everything fine
 
         #Terraform plan
 
-Plan is almost like an execution. It collects inputs from user and cross checks whether the execution will go smoother.
+Plan is almost like an execution. It collects inputs from user and cross checks whether the execution will go smoother. If there are errors in plan execution, we need to address that. Else we are good to proceed apply
 
+        #Terraform apply
+
+Apply will connect OCI and create the VCN and asociated resources.
