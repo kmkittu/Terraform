@@ -110,6 +110,26 @@ Create a file in the name of VCN.tf and copy the below contents.
     route_table_id = "${oci_core_route_table.publicRT.id}"
     security_list_ids = ["${oci_core_security_list.publicSL.id}"]
     }
+#resource for creating private route table
+resource "oci_core_route_table" "privateRT"{
+compartment_id = "${var.compartment_ocid}"
+vcn_id = "${oci_core_vcn.test_vcn.id}"
+display_name = "private_route_table"
+}
+
+
+#resource block for defining Private subnet
+resource "oci_core_subnet" "privatesubnet"{
+dns_label = "${var.privateSubnet_dns_label}"
+compartment_id = "${var.compartment_ocid}"
+vcn_id = "${oci_core_vcn.test_vcn.id}"
+display_name = "${var.display_name_privatesubnet}"
+cidr_block = "${var.cidr_block_privatesubnet}"
+prohibit_public_ip_on_vnic="true"
+route_table_id = "${oci_core_route_table.privateRT.id}"
+security_list_ids = ["${oci_core_security_list.privateSL.id}"]
+}
+
 
     #resource block for internet gateway
     resource "oci_core_internet_gateway" "test_internet_gateway" {
@@ -177,56 +197,115 @@ Create a file in the name of VCN.tf and copy the below contents.
 
 Also create variables.tf with below content
 
-    #define oci provider configuaration
-    provider "oci"{
-        tenancy_ocid = "${var.tenancy_ocid}"
-        user_ocid = "${var.user_ocid}"
-        region ="${var.region}"
-        private_key_path = "${var.private_key_path}"
-        fingerprint = "${var.fingerprint}"
-    }
+        #define oci provider configuaration
+        provider "oci"{
+            tenancy_ocid = "${var.tenancy_ocid}"
+            user_ocid = "${var.user_ocid}"
+            region ="${var.region}"
+            private_key_path = "${var.private_key_path}"
+            fingerprint = "${var.fingerprint}"
+        }
 
-    #provide the list of availability domain
-    data "oci_identity_availability_domain" "ad" {
-    compartment_id = "${var.compartment_ocid}"
-    ad_number = "${var.availability_domain}"
-    }
-    #common variables
-    variable "tenancy_ocid"{}
-    variable "user_ocid"{}
-    variable "private_key_path"{}
-    variable "fingerprint"{}
-    variable "region"{}
-    variable "compartment_ocid"{}
-    variable "availability_domain"{
-    default = "1"
-    }
+        #provide the list of availability domain
+        data "oci_identity_availability_domain" "ad" {
+        compartment_id = "${var.compartment_ocid}"
+        ad_number = "${var.availability_domain}"
+        }
+        #common variables
+        variable "tenancy_ocid"{}
+        variable "user_ocid"{}
+        variable "private_key_path"{}
+        variable "fingerprint"{}
+        variable "region"{}
+        variable "compartment_ocid"{}
+        variable "availability_domain"{
+        default = "1"
+        }
 
-    #variables to define vcn
-    variable "vcn_cidr_block"{
-    description = "provide the valid IPV4 cidr block for vcn"
-    }
-    variable "vcn_dns_label" {
-    description = "A DNS label for the VCN, used in conjunction with the VNIC's hostname and subnet's DNS label to form a fully qualified domain name (FQDN) for each VNIC within this subnet. "
-    default     = "vcn"
-    }
-    variable "vcn_display_name" {
-    description = "provide a display name for vcn"
-    }
+        #variables to define vcn
+        variable "vcn_cidr_block"{
+        description = "provide the valid IPV4 cidr block for vcn"
+        }
+        variable "vcn_dns_label" {
+        description = "A DNS label for the VCN, used in conjunction with the VNIC's hostname and subnet's DNS label to form a fully qualified domain name (FQDN) for each VNIC within this subnet. "
+        default     = "vcn"
+        }
+        variable "vcn_display_name" {
+        description = "provide a display name for vcn"
+        }
 
 
-    #variables to define the public subnet
-    variable "cidr_block_publicsubnet"{
+        #variables to define the public subnet
+        variable "cidr_block_publicsubnet"{
     description = "note that the cidr block for the subnet must be smaller and part of the vcn cidr block"
+        }
+        variable "publicSubnet_dns_label" {
+        description = "A DNS label prefix for the subnet, used in conjunction with the VNIC's hostname and VCN's DNS label to form a fully qualified domain name (FQDN) for each VNIC within this subnet. "
+        default     = "publicsubnet"
+        }
+        variable "display_name_publicsubnet"{
+        description = "privide a displayname for public subnet"
+        }
+    variable "privateSubnet_dns_label" {
+    description = "A DNS label prefix for the subnet, used in conjunction with the VNIC's hostname and VCN's DNS label to form a fully qualified domain name (FQDN) for each VNIC within this subnet. "
+    default     = "privatesubnet"
     }
 
-    variable "publicSubnet_dns_label" {
-    description = "A DNS label prefix for the subnet, used in conjunction with the VNIC's hostname and VCN's DNS label to form a fully qualified domain name (FQDN) for each VNIC within this subnet. "
-    default     = "publicsubnet"
+    variable "display_name_privatesubnet"{
+    description = "privide a displayname for Private subnet"
     }
-    variable "display_name_publicsubnet"{
-    description = "privide a displayname for public subnet"
+
+    variable "cidr_block_privatesubnet"{
+    description = "note that the Private cidr block for the subnet must be smaller and part of the vcn cidr block"
     }
+
+Also create private security list file (private_security_list.tf).
+
+    resource "oci_core_security_list" "privateSL" {
+    compartment_id = "${var.compartment_ocid}"
+    vcn_id         = "${oci_core_vcn.test_vcn.id}"
+    display_name   = "private_security_list"
+
+    egress_security_rules {
+        protocol    = "all"
+        destination = "0.0.0.0/0"
+    }
+    ingress_security_rules {
+        tcp_options {
+        max = "22"
+        min = "22"
+        }
+
+        protocol = "6"
+        source   = "0.0.0.0/0"
+    }
+    ingress_security_rules {
+        icmp_options {
+        type = "0"
+        }
+
+        protocol = "1"
+        source   = "0.0.0.0/0"
+    }
+    ingress_security_rules {
+        icmp_options {
+        type = "3"
+        code = "4"
+        }
+
+        protocol = "1"
+        source   = "0.0.0.0/0"
+    }
+    ingress_security_rules {
+    icmp_options {
+        type = "8"
+        }
+
+        protocol = "1"
+        source   = "0.0.0.0/0"
+    }
+    }
+
 
 Init the Terraform to the current directory
 
