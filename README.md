@@ -102,7 +102,6 @@ Key OCID will be available in Keys details page
         #crypto_endpoint = "https://bbpcufnhinetg-crypto.kms.us-ashburn-1.oraclecloud.com"
 
 
-
 ## 1) Network Resources
 Creation of VCN
 Creation of Gateways
@@ -354,7 +353,7 @@ Init the Terraform to the current directory
         commands will detect it and remind you to do so if necessary.
 
 
-Execute the Terraform plan to verify everything fine 
+Execute the Terraform plan to verify everything fine. We need to provide CIDR values for VCN, Public Subnet, Private Subnet and names of VPN, Public Subnet and Private Subnet.
 
         # terraform plan
         var.cidr_block_privatesubnet
