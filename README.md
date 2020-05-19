@@ -20,7 +20,8 @@ Inside the folder create terraform.tfvars with below details.
 ### Tenancy OCID 
 Open the Profile menu (User menu icon)  and click Tenancy: <your_tenancy_name>.
 The tenancy OCID is shown under Tenancy Information. Click Copy to copy it to your clipboard.
-<picture>
+![Tenancy](https://github.com/kmkittu/Terraform/blob/master/Tenancy.png)
+
 The tenancy OCID looks something like this
 ocid1.tenancy.oc1..<unique_ID>     (notice the word "tenancy" in it)
 
