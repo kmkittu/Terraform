@@ -1,21 +1,20 @@
 # Terraform #
 # Introduction #
-Welcome to Hands on Workshop! Are you bored with managing things with Cloud portal? Are you bored with clicking icons in Cloud portal to create resources and looking for some change for managing Cloud resources? Then it is the workshop you should must try. It will give you some different kind of work style for handling Cloud Resources. 
-In this workshop we will not going to touch web portal, instead we learn and manage all the Cloud resources through Code, i.e Infrastructure As the Code. We are going to create resource through Terraform script. We could discuss in detail about Terraform scripting for each Cloud resource and also we shall experience of creating an Instance in OCI with all dependent resources through Terraform.
+Welcome to Hands on Workshop! Are you bored with managing your cloud environment via Cloud portal? Are you tired with clicking icons repeatedly in Cloud portal to create resources?  Then it is the workshop you should try. This workshop will give you some different kind of experience for handling Cloud Resources. 
+In this workshop we will not going to touch web portal, instead we learn and manage all the Cloud resources through Code, i.e Infrastructure As A Code. We are going to create resources through Terraform script. We could discuss in detail about Terraform scripting for each Cloud resource and also we shall learn about creating an Instance in OCI with all dependent resources through Terraform.
 ##  Steps
 1)	Creation of Network Resources
-2)	Creation of Security Resources
-3)	Creation of Instance (Linux & Windows)
+2)	Creation of Instance (Linux & Windows)
 
-Before proceeding to resources creation, we need to specify OCI credentials for terraform to login.
-The credentials can be specified in terraform.tfvars file. The basic credentials required are User OCID, Tenancy OCID, fingerprint, compartment OCID, region and Private key. 
+Remember we need to create resources in cloud, so first we need to specify OCI credentials for terraform to login into OCI. The credentials will be specified in terraform.tfvars file. The basic credentials required are User OCID, Tenancy OCID, fingerprint, compartment OCID, region and Private key. 
+
 First create a folder to store Terraform scripts.
-Create terraform.tfvars with below details in that folder.
-#tenancy and user information
-tenancy_ocid = <Tenancy OCID>
-user_ocid = <User OCID>
-fingerprint= <FinerPrint value>
-private_key_path = <Private key file with location>
+Inside the folder create terraform.tfvars with below details.
+    #tenancy and user information
+    tenancy_ocid = <Tenancy OCID>
+    user_ocid = <User OCID>
+    fingerprint= <FinerPrint value>
+    private_key_path = <Private key file with location>
 
 
 ### Tenancy OCID 
@@ -46,7 +45,7 @@ If SSH key pair is not created, then follow the below steps.
     [oracle@db key]$ ls -lrt
     -rw-r--r-- 1 oracle oinstall 1679 Apr  3 07:35 oci_key.pem
 
-Generate Public key using the private key through openssl command.
+Generate Public Key with Pem(Privacy Enhanced Mail) format
 
     [oracle@db key]$ openssl rsa -pubout -in oci_key.pem -out oci_key_public.pem
     writing RSA key
@@ -81,14 +80,37 @@ Collect the details of vault_id, key_id, management_endpoint and Crypto_endpoint
 Key OCID will be available in Keys details page
 <Picture>
 
-## Network Resources
+### Example:
+
+        #tenancy and user information
+        tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaalxltbjsgjhukykkd6trlxdfbwjuulnavxqehvv3crknt7ewhlpa"
+        user_ocid = "ocid1.user.oc1..aaaaaaaaqidqcqnx6mfprmzt2nn6xudu3t4pgj4bbqlk23axlr4abbjbfyja"
+        fingerprint= "bf:0a:e6:c7:9c:93:d2:84:87:94:4f:fc:d4:24:ec:c1"
+        private_key_path = "/root/hol/oci_key.pem"
+
+
+        # Region
+        region = "us-ashburn-1"
+
+        # Compartment
+        compartment_ocid = "ocid1.compartment.oc1..aaaaaaaacd43nqpjqwl2tgg7rq5ysabiyxedffdfdhhghgq7swk426b5hnflyvpq"
+
+        #vaults and key information
+        vault_id = "ocid1.vault.oc1.iad.bbpcqhz3aaeug.abuwcljszxj7rps3vxe4x5awnblkvirt2erscvhtdr54ccbz4p46vkzr4fva"
+        key_id = "ocid1.key.oc1.iad.bbpcqhz3aaeug.abuwcljrauzipeizeb5v5qomlcw3cymli4yrceu2e4uffq4nlzqfyd54sixa"
+        management_endpoint = "https://bbpcufnhinetg-management.kms.us-ashburn-1.oraclecloud.com"
+        #crypto_endpoint = "https://bbpcufnhinetg-crypto.kms.us-ashburn-1.oraclecloud.com"
+
+
+
+## 1) Network Resources
 Creation of VCN
 Creation of Gateways
 
 ### VCN
   Virutal cloud network is the first cloud resource to be created. VCN has all the network related resources. While creating VCN, we could also create its components subnet and gateways
 
-Create a file in the name of VCN.tf and copy the below contents.
+Create a file in the name of VCN.tf and copy the below contents. This file has different sections to create various cloud resources and that has been mentioned in the comments at the begining of the section.
 
     #resource block for oci vcn.
     resource "oci_core_vcn" "test_vcn" {
@@ -253,7 +275,7 @@ Also create variables.tf with below content
     description = "note that the Private cidr block for the subnet must be smaller and part of the vcn cidr block"
     }
 
-Also create private security list file (private_security_list.tf).
+VCN has private subnet and we need to specify security list for that. Create private security list file (private_security_list.tf).
 
     resource "oci_core_security_list" "privateSL" {
     compartment_id = "${var.compartment_ocid}"
@@ -300,7 +322,7 @@ Also create private security list file (private_security_list.tf).
     }
     }
 
-
+So far we have created two terraform files. Its time to execute those.
 Init the Terraform to the current directory
 
         #terraform init
@@ -1098,6 +1120,9 @@ Operating System Information
 VCN
 Subnet
 
-We could specify these information as variables in a tf file or specify it in the code itself.
+In this workshop lets fix the Shape to VM.Standard2.1 (which has 1 OCPU, 15GB Memory, Block storage as network storage, 1Gbps Network bandwidth and 2 VNIC) and Operting system as Oracle Linux.
+During the execution we shall collect details about Availability domain, VCN and Subnet information.
+
+
 
 
