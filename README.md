@@ -127,6 +127,8 @@ Creation of Gateways
 
 Create a terraform file in the name of VCN.tf and copy the below contents. This file has different sections to create various cloud resources and that has been mentioned in the comments at the begining of the section.
 
+![VCN.tf](https://github.com/kmkittu/Terraform/blob/master/vcn.tf)
+
     #resource block for oci vcn.
     resource "oci_core_vcn" "test_vcn" {
         #Required
