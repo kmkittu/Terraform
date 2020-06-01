@@ -1529,8 +1529,7 @@ Execute the terraform plan to evalutable the execution plan.
 
 We can verify the instance creation from the portal.
 
-![Intsance] https://github.com/kmkittu/Terraform/blob/master/Image%20-%20Instance.png
-
+![Instance](https://github.com/kmkittu/Terraform/blob/master/Image%20-%20Instance.png)
 If you like to remove the instance, then execute
 
         #terraform destroy
