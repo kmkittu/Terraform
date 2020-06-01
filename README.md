@@ -1219,7 +1219,320 @@ We do have already created variables.tf, but we need to define some variables sp
         }
 
 
+Lets create Instance creation script Linux.tf
+
+        #declare  the imported vcn and subnet values
+        data "oci_core_vcns" "test_vcns" {
+            #Required
+            compartment_id = "${var.compartment_ocid}"
+
+            #Optional
+            display_name = "${var.vcn_display_name}"
+        }
+
+        data "oci_core_subnets" "test_subnets" {
+            #Required
+            compartment_id = "${var.compartment_ocid}"
+            vcn_id = "${lookup(data.oci_core_vcns.test_vcns.virtual_networks[0],"id")}"
+            display_name = "${var.subnet_display_name}"
+            }
+
+        #declare the resources for linux instance
+        resource "oci_core_instance" "linux" {
+        count               = "1"
+        availability_domain = "${lookup(data.oci_identity_availability_domains.ADs.availability_domains[0],"name")}"
+        compartment_id      = "${var.compartment_ocid}"
+        display_name        = "${var.instance_name}"
+        shape               = "${var.shape}"
+
+        create_vnic_details {
+            assign_public_ip = "${var.assign_public_ip}"
+            display_name   = "primaryvnic"
+            hostname_label = "linuxInstance"
+            subnet_id      = "${lookup(data.oci_core_subnets.test_subnets.subnets[0],"id")}"
+        }
+
+        metadata = {
+            ssh_authorized_keys = "${file("${var.ssh_public_key}")}"
+        }
+
+        source_details {
+            boot_volume_size_in_gbs = "${var.boot_volume_size_in_gbs}"
+            source_id               = "${var.instance_image_ocid[var.region]}"
+            source_type             = "image"
+        }
+        timeouts {
+            create = "60m"
+        }
+        }
+
+        resource "oci_core_volume" "linux" {
+        availability_domain = "${lookup(data.oci_identity_availability_domains.ADs.availability_domains[0],"name")}"
+        compartment_id      ="${var.compartment_ocid}"
+        display_name        = "Terraform_deployed_Instance"
+        size_in_gbs         = "${var.boot_volume_size_in_gbs}"
+        }
+
+        resource "oci_core_volume_attachment" "linux" {
+        count           = "1"
+        attachment_type = "iscsi"
+        compartment_id  = "${var.compartment_ocid}"
+        instance_id     = "${oci_core_instance.linux[count.index].id}"
+        volume_id       = "${oci_core_volume.linux.id}"
+        use_chap        = true
+        }
 
 
+Execute the terraform plan to evalutable the execution plan.
+
+        [root@apps existing_vcn]# terraform apply
+        var.instance_name
+        provide the display name for thelinux instance to be deployed
+
+        Enter a value: Linux_Instance
+
+        var.subnet_display_name
+        privide a displayname for public subnet
+
+        Enter a value: subnet1
+
+        var.vcn_display_name
+        provide a display name for vcn
+
+        Enter a value: KK_VCN
+
+        data.oci_identity_availability_domains.ADs: Refreshing state...
+        data.oci_core_vcns.test_vcns: Refreshing state...
+        data.oci_core_subnets.test_subnets: Refreshing state...
+
+        An execution plan has been generated and is shown below.
+        Resource actions are indicated with the following symbols:
+        + create
+
+        Terraform will perform the following actions:
+          # oci_core_instance.linux[0] will be created
+  + resource "oci_core_instance" "linux" {
+      + availability_domain                 = "eLhE:US-ASHBURN-AD-1"
+      + boot_volume_id                      = (known after apply)
+      + compartment_id                      = "ocid1.compartment.oc1..aaaaaaaacd43nqpjqwl2tgg7rq5ysabiyxee6k6yi7q7swk426b5hnflyvpq"
+      + dedicated_vm_host_id                = (known after apply)
+      + defined_tags                        = (known after apply)
+      + display_name                        = "Linux_Instance"
+      + fault_domain                        = (known after apply)
+      + freeform_tags                       = (known after apply)
+      + hostname_label                      = (known after apply)
+      + id                                  = (known after apply)
+      + image                               = (known after apply)
+      + ipxe_script                         = (known after apply)
+      + is_pv_encryption_in_transit_enabled = (known after apply)
+      + launch_mode                         = (known after apply)
+      + metadata                            = {
+          + "ssh_authorized_keys" = <<~EOT
+                ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxFUr72b82/yXUB/3nCA5qSxoe/eGZuiV2TOCV+6XOSGdZLEtPS9EYMoD9NE19TZ+Xm9J2NCBmiDG5H1lLEAUMbiY5WVyG6XTXoRJSnHVXijKwfUsduxde3PKnMvK57qoTYDndRc2gx8B6gI/XF+zFTxsMNHyWU2OrhHHxT349FaB85ByjUwmhtR7E8eQP0pSlht+eQZcADuezpicROzc012iLwcp/i3deRvIfqIZk8sDynzC8GtVHyOgu/jayDjaFl8ZoL5LKMmHidn9nYL5hlzw5+IkYj0Vx3PNVR6QOUbOLubcKlbMIvlNmmR9KbMmWsucDDVBV9Aq8TYl0HKq3
+            EOT
+        }
+      + private_ip                          = (known after apply)
+      + public_ip                           = (known after apply)
+      + region                              = (known after apply)
+      + shape                               = "VM.Standard2.1"
+      + state                               = (known after apply)
+      + subnet_id                           = (known after apply)
+      + system_tags                         = (known after apply)
+      + time_created                        = (known after apply)
+      + time_maintenance_reboot_due         = (known after apply)
+
+      + agent_config {
+          + is_management_disabled = (known after apply)
+          + is_monitoring_disabled = (known after apply)
+        }
+
+      + create_vnic_details {
+          + assign_public_ip       = "true"
+          + defined_tags           = (known after apply)
+          + display_name           = "primaryvnic"
+          + freeform_tags          = (known after apply)
+          + hostname_label         = "linuxInstance"
+          + private_ip             = (known after apply)
+          + skip_source_dest_check = (known after apply)
+          + subnet_id              = "ocid1.subnet.oc1.iad.aaaaaaaavwjyxuh54okd4dtgkl2ivytcv4jyfa6ls4uhdj7l7564cuhapysa"
+        }
+
+      + launch_options {
+          + boot_volume_type                    = (known after apply)
+          + firmware                            = (known after apply)
+          + is_consistent_volume_naming_enabled = (known after apply)
+          + is_pv_encryption_in_transit_enabled = (known after apply)
+          + network_type                        = (known after apply)
+          + remote_data_volume_type             = (known after apply)
+        }
+
+      + shape_config {
+          + gpu_description               = (known after apply)
+          + gpus                          = (known after apply)
+          + local_disk_description        = (known after apply)
+          + local_disks                   = (known after apply)
+          + local_disks_total_size_in_gbs = (known after apply)
+          + max_vnic_attachments          = (known after apply)
+          + memory_in_gbs                 = (known after apply)
+          + networking_bandwidth_in_gbps  = (known after apply)
+          + ocpus                         = (known after apply)
+          + processor_description         = (known after apply)
+        }
+
+      + source_details {
+          + boot_volume_size_in_gbs = "50"
+          + kms_key_id              = (known after apply)
+          + source_id               = "ocid1.image.oc1.iad.aaaaaaaahjkmmew2pjrcpylaf6zdddtom6xjnazwptervti35keqd4fdylca"
+          + source_type             = "image"
+        }
+
+      + timeouts {
+          + create = "60m"
+        }
+    }
+
+  # oci_core_volume.linux will be created
+  + resource "oci_core_volume" "linux" {
+      + availability_domain = "eLhE:US-ASHBURN-AD-1"
+      + backup_policy_id    = (known after apply)
+      + compartment_id      = "ocid1.compartment.oc1..aaaaaaaacd43nqpjqwl2tgg7rq5ysabiyxee6k6yi7q7swk426b5hnflyvpq"
+      + defined_tags        = (known after apply)
+      + display_name        = "Terraform_deployed_Instance"
+      + freeform_tags       = (known after apply)
+      + id                  = (known after apply)
+      + is_hydrated         = (known after apply)
+      + kms_key_id          = (known after apply)
+      + size_in_gbs         = "50"
+      + size_in_mbs         = (known after apply)
+      + state               = (known after apply)
+      + system_tags         = (known after apply)
+      + time_created        = (known after apply)
+      + volume_backup_id    = (known after apply)
+      + volume_group_id     = (known after apply)
+      + vpus_per_gb         = (known after apply)
+
+      + source_details {
+          + id   = (known after apply)
+          + type = (known after apply)
+        }
+    }
+
+  # oci_core_volume_attachment.linux[0] will be created
+  + resource "oci_core_volume_attachment" "linux" {
+      + attachment_type                     = "iscsi"
+      + availability_domain                 = (known after apply)
+      + chap_secret                         = (known after apply)
+      + chap_username                       = (known after apply)
+      + compartment_id                      = "ocid1.compartment.oc1..aaaaaaaacd43nqpjqwl2tgg7rq5ysabiyxee6k6yi7q7swk426b5hnflyvpq"
+      + device                              = (known after apply)
+      + display_name                        = (known after apply)
+      + id                                  = (known after apply)
+      + instance_id                         = (known after apply)
+      + ipv4                                = (known after apply)
+      + iqn                                 = (known after apply)
+      + is_pv_encryption_in_transit_enabled = (known after apply)
+      + is_read_only                        = (known after apply)
+      + is_shareable                        = (known after apply)
+      + port                                = (known after apply)
+      + state                               = (known after apply)
+      + time_created                        = (known after apply)
+      + use_chap                            = true
+      + volume_id                           = (known after apply)
+    }
+
+        Plan: 3 to add, 0 to change, 0 to destroy.
+
+
+        Warning: Interpolation-only expressions are deprecated
+
+        on linux.tf line 20, in resource "oci_core_instance" "linux":
+        20:  availability_domain = "${lookup(data.oci_identity_availability_domains.ADs.availability_domains[0],"name")}"
+
+        Terraform 0.11 and earlier required all non-constant expressions to be
+        provided via interpolation syntax, but this pattern is now deprecated. To
+        silence this warning, remove the "${ sequence from the start and the }"
+        sequence from the end of this expression, leaving just the inner expression.
+
+        Template interpolation syntax is still used to construct strings from
+        expressions when the template includes multiple interpolation sequences or a
+        mixture of literal strings and interpolations. This deprecation applies only
+        to templates that consist entirely of a single interpolation sequence.
+
+        (and 18 more similar warnings elsewhere)
+
+
+        Warning: Quoted type constraints are deprecated
+
+        on variables.tf line 38, in variable "instance_image_ocid":
+        38:   type = "map"
+
+        Terraform 0.11 and earlier required type constraints to be given in quotes,
+        but that form is now deprecated and will be removed in a future version of
+        Terraform. To silence this warning, remove the quotes around "map" and write
+        map(string) instead to explicitly indicate that the map elements are strings.
+
+        Do you want to perform these actions?
+        Terraform will perform the actions described above.
+        Only 'yes' will be accepted to approve.
+
+        Enter a value: yes
+
+        oci_core_volume.linux: Creating...
+        oci_core_instance.linux[0]: Creating...
+        oci_core_volume.linux: Still creating... [10s elapsed]
+        oci_core_instance.linux[0]: Still creating... [10s elapsed]
+        oci_core_volume.linux: Creation complete after 14s [id=ocid1.volume.oc1.iad.abuwcljrhqb37akjcc2ke7jlsuatxdintxdttbikxy4lqwjapa3gpqdpivrq]
+        oci_core_instance.linux[0]: Still creating... [20s elapsed]
+        oci_core_instance.linux[0]: Still creating... [30s elapsed]
+        oci_core_instance.linux[0]: Still creating... [40s elapsed]
+        oci_core_instance.linux[0]: Still creating... [50s elapsed]
+        oci_core_instance.linux[0]: Still creating... [1m0s elapsed]
+        oci_core_instance.linux[0]: Still creating... [1m10s elapsed]
+        oci_core_instance.linux[0]: Creation complete after 1m16s [id=ocid1.instance.oc1.iad.anuwcljrzxsy2nacvnueqml6dqcmgkexwazdkxsdljog6w6yn2zqiuvojwlq]
+        oci_core_volume_attachment.linux[0]: Creating...
+        oci_core_volume_attachment.linux[0]: Still creating... [10s elapsed]
+        oci_core_volume_attachment.linux[0]: Still creating... [20s elapsed]
+        oci_core_volume_attachment.linux[0]: Still creating... [30s elapsed]
+        oci_core_volume_attachment.linux[0]: Creation complete after 34s [id=ocid1.volumeattachment.oc1.iad.anuwcljrzxsy2naculrusuq65pcgatthv6i23foodp6knmuhxaik634fan2a]
+
+        Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+
+        Outputs:
+
+        assigned_public_ip = [
+        "129.213.81.171",
+        ]
+        instance_id = [
+        "ocid1.instance.oc1.iad.anuwcljrzxsy2nacvnueqml6dqcmgkexwazdkxsdljog6w6yn2zqiuvojwlq",
+        ]
+        public_subnet_id = ocid1.subnet.oc1.iad.aaaaaaaavwjyxuh54okd4dtgkl2ivytcv4jyfa6ls4uhdj7l7564cuhapysa
+        show-ads = [
+        {
+            "compartment_id" = "ocid1.compartment.oc1..aaaaaaaacd43nqpjqwl2tgg7rq5ysabiyxee6k6yi7q7swk426b5hnflyvpq"
+            "id" = "ocid1.availabilitydomain.oc1..aaaaaaaauvt2n7pijol7uqgdnnsoojcukrijtmcltvfwxazmitk235wyohta"
+            "name" = "eLhE:US-ASHBURN-AD-1"
+        },
+        {
+            "compartment_id" = "ocid1.compartment.oc1..aaaaaaaacd43nqpjqwl2tgg7rq5ysabiyxee6k6yi7q7swk426b5hnflyvpq"
+            "id" = "ocid1.availabilitydomain.oc1..aaaaaaaaztunlny6ae4yw2vghp5go2zceaonwp6wiioe3tnh2vlaxjjl2n3a"
+            "name" = "eLhE:US-ASHBURN-AD-2"
+        },
+        {
+            "compartment_id" = "ocid1.compartment.oc1..aaaaaaaacd43nqpjqwl2tgg7rq5ysabiyxee6k6yi7q7swk426b5hnflyvpq"
+            "id" = "ocid1.availabilitydomain.oc1..aaaaaaaatrwxaogr7dl4yschqtrmqrdv6uzis3mgbnomiagqrfhcb7mxsfdq"
+            "name" = "eLhE:US-ASHBURN-AD-3"
+        },
+        ]
+        vcn_id = ocid1.vcn.oc1.iad.aaaaaaaaxb4ae72d4p5e4aztdadqu4qnse7prpfrcb3z7ps6rsy3jgkxcrpa
+        [root@apps existing_vcn]#
+
+
+We can verify the instance creation from the portal.
+
+![Intsance] https://github.com/kmkittu/Terraform/blob/master/Image%20-%20Instance.png
+
+If you like to remove the instance, then execute
+
+        #terraform destroy
 
 
