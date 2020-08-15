@@ -1533,5 +1533,6 @@ We can verify the instance creation from the portal.
 If you like to remove the instance, then execute
 
         #terraform destroy
+        
 
 
