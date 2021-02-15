@@ -5,13 +5,13 @@ In this workshop we are not going to touch web portal, instead we learn and mana
 
 ### Note: We can use any flavor of Operating system for this workshop and Terraform should have been installed there. Reference: https://www.terraform.io/docs/enterprise/install/installer.html ###
 
-Once Terraform installed and configured, we could follow the below steps.
+##Steps
+1) Create Terraform files for OCI login credentials
+2) Create Terraform code for OCI resources
+3) Check the Integrity of the code through Terraform Plan command
+4) Execute the code through Terraform apply command
 
-## Steps
-1)	Creation of Network Resources
-2)	Creation of Instance (Linux & Windows)
-
-Remember we are going to create resources in cloud, for that first we need to specify OCI credentials to terraform for login into OCI. In this workshop we will be creating many terraform files with different purpose. First we shall create terraform.tfvars file and include all the login credentials in that. The basic credentials required to login are User OCID, Tenancy OCID, fingerprint, compartment OCID, region and Private key. 
+Remember we are going to create resources in cloud, for that first we need to specify OCI credentials to terraform for login into OCI.  First we shall collect the basic credentials required to login, that are User OCID, Tenancy OCID, fingerprint, compartment OCID, region and Private key. 
 
 First create a folder to store all Terraform scripts. Inside the folder create terraform.tfvars with below details.
     #tenancy and user information
